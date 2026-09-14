@@ -1,0 +1,129 @@
+/* app/tacticIdeas/tacticIdeas.module.css */
+
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2rem;
+  color: var(--foreground);
+}
+
+.settingsGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.2rem;
+  width: 100%;
+  max-width: 1200px;
+}
+
+.section {
+  padding: 0.8rem;
+  border-radius: 10px;
+  border: 3px solid white;
+  background-color: black;
+}
+
+.section label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  text-align: center;
+  font-weight: bold;
+  color: white;
+}
+
+.optionRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: center;
+}
+
+/* ========================================== */
+/* OPTION BUTTONS */
+/* ========================================== */
+.optionButton {
+  padding: 0.4rem 0.8rem;
+  border-radius: 6px;
+  border: 1px solid white;
+  background-color: #2a2a2a;
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-weight: bold;
+}
+
+.optionButton:hover {
+  background-color: #444;
+}
+
+.optionButton.active {
+  background-color: #2563eb;
+  border: 1px solid white;
+}
+
+/* ========================================== */
+/* SLIDER */
+/* ========================================== */
+.sliderWrapper {
+  position: relative;
+  width: 90%;
+  margin: 0 auto;
+}
+
+/* slider */
+.slider {
+  width: 100%;
+  appearance: none;
+  height: 8px;
+  border-radius: 4px;
+  background: #2563eb;
+  outline: none;
+}
+
+/* thumb */
+.slider::-webkit-slider-thumb {
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: white;
+  cursor: pointer;
+  position: relative;
+  z-index: 2;
+}
+
+.zeroMark {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 5px;
+  height: 20px;
+  background: white;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.sliderLabels {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  width: 90%;
+  margin: 0.4rem auto 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: white;
+  font-weight: bold;
+}
+
+.sliderLabels span {
+  text-align: center;
+}
+
+.sliderLabels span:first-child {
+  text-align: left;
+}
+
+.sliderLabels span:last-child {
+  text-align: right;
+}
