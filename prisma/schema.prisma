@@ -24,6 +24,7 @@ model User {
   accounts   Account[]
   sessions   Session[]
   formations Formation[]
+  players    Player[]
 }
 
 model Formation {
@@ -36,6 +37,23 @@ model Formation {
   user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt     DateTime @default(now())
   @@unique([name, userId, type])
+}
+
+model Player {
+  id        String   @id @default(cuid())
+  name      String
+  position  String
+  role      String
+  shirtNumber Int
+  profile   Json
+  photo     String?
+
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, shirtNumber])
 }
 
 

@@ -1,6 +1,6 @@
 // app/team/teamPageClient.tsx
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import Image from "next/image";
 import { SquadPlayer, PlayerState } from "@/engine/models/types";
@@ -13,6 +13,31 @@ export default function TeamPageClient() {
     const { status } = useSession();
 
     const [squad, setSquad] = useState<SquadPlayer[]>([]);
+
+    useEffect(() => {
+        if (status !== "authenticated") {
+            return;
+        }
+    
+        const loadPlayers = async () => {
+            try {
+                const response = await fetch("/api/team");
+    
+                if (!response.ok) {
+                    throw new Error("Failed to load players");
+                }
+    
+                const players = await response.json();
+    
+                setSquad(players as SquadPlayer[]);
+            } catch (error) {
+                console.error("Failed to load players:", error);
+            }
+        };
+    
+        loadPlayers();
+    }, [status]);
+
     const [showAddPlayerModal, setShowAddPlayerModal] = useState(false);
     const [editingPlayerId, setEditingPlayerId] = useState<string | null>(null);
 
@@ -22,6 +47,7 @@ export default function TeamPageClient() {
     const [newPlayerPosition, setNewPlayerPosition] = useState<PlayerState["position"] | "">("");
     const [newPlayerShirtNumber, setNewPlayerShirtNumber] = useState<number | "">("");
     const [newPlayerProfile, setNewPlayerProfile] = useState<keyof typeof PLAYER_PROFILE_CATALOG>("DEFAULT");
+    const [playerError, setPlayerError] = useState("");
 
     if (status === "loading") {
         return null;
@@ -62,6 +88,7 @@ export default function TeamPageClient() {
         setNewPlayerPosition("");
         setNewPlayerShirtNumber("");
         setNewPlayerProfile("DEFAULT");
+        setPlayerError("");
     };
 
     const closeAddPlayerModal = () => {
@@ -70,10 +97,14 @@ export default function TeamPageClient() {
         resetPlayerForm();
     };
 
-    const handleAddPlayer = () => {
+    const handleAddPlayer = async () => {
         const trimmedName = newPlayerName.trim();
     
-        if (!trimmedName || newPlayerPosition === "" || newPlayerShirtNumber === "") {
+        if (
+            !trimmedName ||
+            newPlayerPosition === "" ||
+            newPlayerShirtNumber === ""
+        ) {
             return;
         }
     
@@ -90,46 +121,121 @@ export default function TeamPageClient() {
         const profile = PLAYER_PROFILE_CATALOG[newPlayerProfile];
         const role = getRoleFromPosition(newPlayerPosition);
     
-        if (editingPlayerId) {
-            setSquad((currentSquad) =>
-                currentSquad.map((player) =>
-                    player.id === editingPlayerId
-                        ? {
-                              ...player,
-                              name: trimmedName,
-                              photo: newPlayerPhoto,
-                              shirtNumber: newPlayerShirtNumber,
-                              role,
-                              position: newPlayerPosition,
-                              profile,
-                          }
-                        : player
-                )
-            );
-        } else {
-            const newPlayer: SquadPlayer = {
-                id: crypto.randomUUID(),
-                name: trimmedName,
-                photo: newPlayerPhoto,
-                shirtNumber: newPlayerShirtNumber,
-                role,
-                position: newPlayerPosition,
-                profile,
-            };
+        try {
+            if (editingPlayerId) {
+                const response = await fetch("/api/team", {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        id: editingPlayerId,
+                        name: trimmedName,
+                        photo: newPlayerPhoto ?? null,
+                        shirtNumber: newPlayerShirtNumber,
+                        role,
+                        position: newPlayerPosition,
+                        profile,
+                    }),
+                });
     
-            setSquad((currentSquad) => [
-                ...currentSquad,
-                newPlayer,
-            ]);
+                if (response.status === 409) {
+                    setPlayerError("SHIRT NUMBER ALREADY IN USE");
+                    return;
+                }
+                
+                if (!response.ok) {
+                    throw new Error("Failed to update player");
+                }
+    
+                const updatedPlayer = await response.json();
+    
+                setSquad((currentSquad) =>
+                    currentSquad.map((player) =>
+                        player.id === editingPlayerId
+                            ? {
+                                  id: updatedPlayer.id,
+                                  name: updatedPlayer.name,
+                                  photo: updatedPlayer.photo ?? undefined,
+                                  shirtNumber: updatedPlayer.shirtNumber,
+                                  role: updatedPlayer.role,
+                                  position: updatedPlayer.position,
+                                  profile: updatedPlayer.profile,
+                              }
+                            : player
+                    )
+                );
+            } else {
+                const response = await fetch("/api/team", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        name: trimmedName,
+                        photo: newPlayerPhoto ?? null,
+                        shirtNumber: newPlayerShirtNumber,
+                        role,
+                        position: newPlayerPosition,
+                        profile,
+                    }),
+                });
+    
+                if (response.status === 409) {
+                    setPlayerError("SHIRT NUMBER ALREADY IN USE");
+                    return;
+                }
+                
+                if (!response.ok) {
+                    throw new Error("Failed to create player");
+                }
+    
+                const createdPlayer = await response.json();
+    
+                const newPlayer: SquadPlayer = {
+                    id: createdPlayer.id,
+                    name: createdPlayer.name,
+                    photo: createdPlayer.photo ?? undefined,
+                    shirtNumber: createdPlayer.shirtNumber,
+                    role: createdPlayer.role,
+                    position: createdPlayer.position,
+                    profile: createdPlayer.profile,
+                };
+    
+                setSquad((currentSquad) => [
+                    ...currentSquad,
+                    newPlayer,
+                ]);
+            }
+    
+            closeAddPlayerModal();
+        } catch (error) {
+            console.error("Failed to save player:", error);
         }
-    
-        closeAddPlayerModal();
     };
 
-    const handleDeletePlayer = (playerId: string) => {
-        setSquad((currentSquad) =>
-            currentSquad.filter((player) => player.id !== playerId)
-        );
+    const handleDeletePlayer = async (playerId: string) => {
+        try {
+            const response = await fetch("/api/team", {
+                method: "DELETE",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    id: playerId,
+                }),
+            });
+    
+            if (!response.ok) {
+                throw new Error("Failed to delete player");
+            }
+    
+            setSquad((currentSquad) =>
+                currentSquad.filter((player) => player.id !== playerId)
+            );
+        } catch (error) {
+            console.error("Failed to delete player:", error);
+        }
     };
 
     return (
@@ -545,6 +651,12 @@ export default function TeamPageClient() {
                         )
                     )}
                 </select>
+
+                {playerError && (
+                    <p className={modalStyles.errorText}>
+                        {playerError}
+                    </p>
+                )}
 
                 <div className={modalStyles.modalActions}>
                     <button
