@@ -1,4 +1,4 @@
-// app/start/components/Pitch.tsx
+// app/start/components/pitch.tsx
 import React, { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import Player from './player';

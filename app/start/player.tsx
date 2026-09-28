@@ -1,6 +1,7 @@
 // app/start/player.tsx
 import Draggable from 'react-draggable';
 import { Settings } from "lucide-react";
+import Image from 'next/image';
 import styles from './page.module.css';
 import { PlayerProps } from './uiTypes';
 import { PITCH_LENGTH, PITCH_WIDTH } from '@/engine/core/geometry';
@@ -49,7 +50,29 @@ export default function Player({index, pos, pitchSize, onStop, playerRef, isOppo
             <Settings size={14} />
           </button>
         )}
-        <span className={styles.playerNumber}>{pos.shirtNumber}</span>
+        {pos.photo ? (
+          <Image
+            src={pos.photo}
+            alt=""
+            width={PLAYER_SIZE}
+            height={PLAYER_SIZE}
+            unoptimized
+            draggable={false}
+            style={{
+              position: 'absolute',
+              inset: 0,
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              borderRadius: '50%',
+              pointerEvents: 'none',
+            }}
+          />
+        ) : (
+          <span className={styles.playerNumber}>
+            {pos.shirtNumber}
+          </span>
+        )}
       </div>
     </Draggable>
   );

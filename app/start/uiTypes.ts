@@ -5,7 +5,7 @@ import { PlayerState, GameState, PassDebugLine } from "@/engine/models/types";
 // Define the properties for the Player component
 export type PlayerProps = {
   index: number;
-  pos: Pick<PlayerState, 'x' | 'y' | 'shirtNumber'>;
+  pos: Pick<PlayerState, 'x' | 'y' | 'photo' | 'shirtNumber'>;
   pitchSize: { width: number; height: number };
   onStop: (index: number, x: number, y: number) => void;
   playerRef: React.RefObject<HTMLDivElement | null>;

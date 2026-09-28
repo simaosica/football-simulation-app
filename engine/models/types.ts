@@ -26,6 +26,7 @@ export type PlayerState = {
   formationX: number; // static tactical anchor x position
   formationY: number; // static tactical anchor y position
   team: 'MAIN' | 'OPPONENT';
+  photo?: string;
   shirtNumber: number;
   role: 'GK' | 'DEF' | 'MID' | 'FWD';
   position: 'GK' | 'LB' | 'LWB' | 'LCB' | 'CB' | 'RCB' | 'RB' | 'RWB' |

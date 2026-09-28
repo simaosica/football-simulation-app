@@ -263,11 +263,11 @@ export const formationLayouts: Record<string, PlayerState[]> = {
     { x: 62, y: 58,  formationX: 62, formationY: 58,  team: 'MAIN', shirtNumber: 7,  role: 'FWD', position: 'RW',   profile: WINGER_PROFILE }
   ],
   '4-4-2': [
-    { x: 34, y: 102, formationX: 34, formationY: 102, team: 'MAIN', shirtNumber: 1,  role: 'GK',  position: 'GK',   profile: DEFAULT_GK_PROFILE },
-    { x: 4,  y: 90,  formationX: 4,  formationY: 90,  team: 'MAIN', shirtNumber: 5,  role: 'DEF', position: 'LB',   profile: DEFAULT_FULLBACK_PROFILE },
-    { x: 20, y: 97,  formationX: 20, formationY: 97,  team: 'MAIN', shirtNumber: 4,  role: 'DEF', position: 'LCB',  profile: DEFAULT_CB_PROFILE },
-    { x: 48, y: 97,  formationX: 48, formationY: 97,  team: 'MAIN', shirtNumber: 3,  role: 'DEF', position: 'RCB',  profile: DEFAULT_CB_PROFILE },
-    { x: 64, y: 90,  formationX: 64, formationY: 90,  team: 'MAIN', shirtNumber: 2,  role: 'DEF', position: 'RB',   profile: DEFAULT_FULLBACK_PROFILE },
+    { x: 34, y: 102, formationX: 34, formationY: 102, team: 'MAIN', shirtNumber: 1,  role: 'GK',  position: 'GK',  profile: DEFAULT_GK_PROFILE },
+    { x: 4,  y: 90,  formationX: 4,  formationY: 90,  team: 'MAIN', shirtNumber: 5,  role: 'DEF', position: 'LB',  profile: DEFAULT_FULLBACK_PROFILE },
+    { x: 20, y: 97,  formationX: 20, formationY: 97,  team: 'MAIN', shirtNumber: 4,  role: 'DEF', position: 'LCB', profile: DEFAULT_CB_PROFILE },
+    { x: 48, y: 97,  formationX: 48, formationY: 97,  team: 'MAIN', shirtNumber: 3,  role: 'DEF', position: 'RCB', profile: DEFAULT_CB_PROFILE },
+    { x: 64, y: 90,  formationX: 64, formationY: 90,  team: 'MAIN', shirtNumber: 2,  role: 'DEF', position: 'RB',  profile: DEFAULT_FULLBACK_PROFILE },
     { x: 22, y: 74,  formationX: 22, formationY: 74,  team: 'MAIN', shirtNumber: 6,  role: 'MID', position: 'LCM', profile: DEFAULT_MIDFIELDER_PROFILE },
     { x: 46, y: 74,  formationX: 46, formationY: 74,  team: 'MAIN', shirtNumber: 8,  role: 'MID', position: 'RCM', profile: DEFAULT_MIDFIELDER_PROFILE },
     { x: 5,  y: 70,  formationX: 5,  formationY: 70,  team: 'MAIN', shirtNumber: 11, role: 'MID', position: 'LM',  profile: WINGER_PROFILE },

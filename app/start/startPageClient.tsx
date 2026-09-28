@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useSession, signOut } from 'next-auth/react';
 import { Play, Pause } from "lucide-react";
 import { useLanguage } from '../i18n/languageContext';
+import Image from 'next/image';
 import styles from './page.module.css';
 import modalStyles from '@/app/components/modal/modal.module.css';
 import Modal from '@/app/components/modal/modal';
@@ -103,6 +104,7 @@ export default function StartPage() {
   const [originalRole, setOriginalRole] = useState<PlayerState["role"] | null>(null);
   const [originalPosition, setOriginalPosition] = useState<PlayerState["position"] | null>(null);
   const [originalProfile, setOriginalProfile] = useState<PlayerState["profile"] | null>(null);
+  const [originalPhoto, setOriginalPhoto] = useState<string | undefined>(undefined);
   const [originalShirtNumber, setOriginalShirtNumber] = useState<number | null>(null);
 
   // On initial load, check if we need to prompt for password setup
@@ -145,6 +147,7 @@ export default function StartPage() {
     setOriginalRole(mainPlayers[index].role);
     setOriginalPosition(mainPlayers[index].position);
     setOriginalProfile(mainPlayers[index].profile);
+    setOriginalPhoto(mainPlayers[index].photo);
     setOriginalShirtNumber(mainPlayers[index].shirtNumber);
     setEditingPlayerIndex(index);
   };
@@ -183,6 +186,7 @@ export default function StartPage() {
         position: originalPosition,
         role: originalRole,
         profile: originalProfile,
+        photo: originalPhoto,
         shirtNumber: originalShirtNumber,
       };
       setMainPlayers(reverted);
@@ -191,6 +195,7 @@ export default function StartPage() {
     setOriginalPosition(null);
     setOriginalRole(null);
     setOriginalProfile(null);
+    setOriginalPhoto(undefined);
     setOriginalShirtNumber(null);
   } 
 
@@ -629,6 +634,58 @@ export default function StartPage() {
 
       <Modal open={editingPlayerIndex !== null}>
         {editingPlayerIndex !== null && (<>
+          <label className={modalStyles.modalLabel}>
+            PLAYER PHOTO
+          </label>
+
+          <div className={modalStyles.photoUpload}>
+            {mainPlayers[editingPlayerIndex].photo ? (
+              <Image
+                src={mainPlayers[editingPlayerIndex].photo}
+                alt="Player"
+                width={70}
+                height={70}
+                className={modalStyles.photoPreview}
+              />
+            ) : (
+              <div className={modalStyles.photoPlaceholder}>
+                👤
+              </div>
+            )}
+
+            <label className={modalStyles.photoButton}>
+              {mainPlayers[editingPlayerIndex].photo
+                ? "CHANGE PHOTO"
+                : "CHOOSE PHOTO"}
+
+              <input
+                type="file"
+                accept="image/*"
+                hidden
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                
+                  const reader = new FileReader();
+                
+                  reader.onload = () => {
+                    const updated = [...mainPlayers];
+                  
+                    updated[editingPlayerIndex] = {
+                      ...updated[editingPlayerIndex],
+                      photo: reader.result as string,
+                    };
+                  
+                    setMainPlayers(updated);
+                    setPlayerMoved(true);
+                  };
+                
+                  reader.readAsDataURL(file);
+                }}
+              />
+            </label>
+          </div>
+
           {!isGK && (<>
             <label className={modalStyles.modalLabel}>
               {t.position}
@@ -725,12 +782,19 @@ export default function StartPage() {
             
           <div className={modalStyles.modalActions}>
             <button className={modalStyles.confirmButtonSave}
-              disabled={originalPosition === mainPlayers[editingPlayerIndex].position &&
+              disabled={
+                originalPhoto === mainPlayers[editingPlayerIndex].photo &&
+                originalPosition === mainPlayers[editingPlayerIndex].position &&
                 originalProfile === mainPlayers[editingPlayerIndex].profile &&
-                originalShirtNumber ===mainPlayers[editingPlayerIndex].shirtNumber}
+                originalShirtNumber === mainPlayers[editingPlayerIndex].shirtNumber
+              }
               onClick={() => {
                 setEditingPlayerIndex(null);
                 setOriginalPosition(null);
+                setOriginalRole(null);
+                setOriginalProfile(null);
+                setOriginalPhoto(undefined);
+                setOriginalShirtNumber(null);
               }}
             >
               {t.save}
