@@ -35,6 +35,16 @@ export type PlayerState = {
   profile: PlayerProfile;
 };
 
+export type SquadPlayer = {
+  id: string;
+  name: string;
+  photo?: string;
+  shirtNumber: number;
+  role: 'GK' | 'DEF' | 'MID' | 'FWD';
+  position: PlayerState['position'];
+  profile: PlayerProfile;
+};
+
 // Define the type for the Ball
 export type Ball = {
   x: number;
