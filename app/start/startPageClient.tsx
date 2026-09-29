@@ -8,7 +8,7 @@ import Image from 'next/image';
 import styles from './page.module.css';
 import modalStyles from '@/app/components/modal/modal.module.css';
 import Modal from '@/app/components/modal/modal';
-import { PlayerState, AppStep, TacticalProfile } from '@/engine/models/types';
+import { PlayerState, AppStep, TacticalProfile, SquadPlayer } from '@/engine/models/types';
 import { getRoleFromPosition, formationLayouts, opponentFormationLayouts, PLAYER_PROFILE_CATALOG } from '@/engine/models/constants';
 import Pitch from './pitch';
 import useFormationManager from './useFormationManager';
@@ -36,6 +36,64 @@ export default function StartPage() {
     saveFormation,
     deleteSavedFormation,
   } = useFormationManager(formationLayouts, "MAIN", "4-3-3", status)
+
+  useEffect(() => {
+    const loadStartingXI = async () => {
+        try {
+            const [startingXIResponse, teamResponse] = await Promise.all([
+                fetch("/api/starting-xi"),
+                fetch("/api/team"),
+            ]);
+
+            if (!startingXIResponse.ok || !teamResponse.ok) {
+                throw new Error("Failed to load Starting XI");
+            }
+
+            const startingXI = await startingXIResponse.json();
+            const squad = await teamResponse.json();
+
+            if (!startingXI) {
+                return;
+            }
+
+            const formation = formationLayouts[startingXI.formation];
+
+            if (!formation) {
+                console.error("Unknown formation:", startingXI.formation);
+                return;
+            }
+
+            const players: PlayerState[] = formation.map((slot, index) => {
+                const playerId = startingXI.players[index];
+                const player = squad.find(
+                    (p: SquadPlayer) => p.id === playerId
+                );
+
+                if (!player) {
+                    throw new Error(
+                        `Player ${playerId} from Starting XI was not found in squad`
+                    );
+                }
+
+                return {
+                    ...slot,
+                    photo: player.photo,
+                    shirtNumber: player.shirtNumber,
+                    role: player.role,
+                    position: slot.position,
+                    profile: player.profile,
+                };
+            });
+
+            setMainPlayers(players);
+        } catch (error) {
+            console.error("Failed to load Starting XI:", error);
+        }
+    };
+
+    loadStartingXI();
+  }, [setMainPlayers]);
+
   const {
     setFormation: setOpponentTeamFormation,
     players: opponentPlayers,
@@ -844,7 +902,7 @@ export default function StartPage() {
             else setAppStep("SETUP");
           }}
         >
-          {isSetupMode ? t.logout : t.return}
+          {t.return}
         </button>
 
         {(isSetupMode || isTacticsMode) && (
