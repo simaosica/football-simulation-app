@@ -74,7 +74,7 @@ export default function HomeContent() {
     setLoading(true);
     setAuthError(null);
 
-    const callbackUrl = searchParams.get("callbackUrl") ?? "/start";
+    const callbackUrl = searchParams.get("callbackUrl") ?? "/team";
     const lowerEmail = email.trim().toLowerCase();
   
     const result = await signIn("credentials", {
@@ -112,7 +112,7 @@ export default function HomeContent() {
     if (loading) return;
     setLoading(true);
   
-    const callbackUrl = searchParams.get("callbackUrl") ?? "/start";
+    const callbackUrl = searchParams.get("callbackUrl") ?? "/team";
   
     await signIn("google", { callbackUrl });
   };  
@@ -178,7 +178,7 @@ export default function HomeContent() {
   // Redirect authenticated users to the start page
   useEffect(() => {
     if (status === "authenticated") {
-      router.replace("/start");
+      router.replace("/team");
     }
   }, [status, router]);
 

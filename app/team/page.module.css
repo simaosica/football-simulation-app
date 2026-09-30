@@ -10,8 +10,10 @@
 }
 
 .section {
-    margin-bottom: 28px;
-    padding: 20px;
+    width: 100%;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 1rem 1rem 0;
     border: 1px solid rgba(255, 255, 255, 0.15);
     border-radius: 8px;
     background: rgba(0, 0, 0, 0.08);
@@ -20,6 +22,18 @@
 .sectionTitle {
     margin: 0 0 18px;
     font-size: 18px;
+    text-align: center;
+    padding-top: 7px;
+}
+
+/* ========================================== */
+/* HEADINGS AND TEXT */
+/* ========================================== */
+.heading {
+  font-size: 1.875rem;
+  font-weight: bold;
+  margin-bottom: 1rem;
+  text-align: center;
 }
 
 .empty {
@@ -121,13 +135,7 @@
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 1rem;
-}
-  
-.section {
-    width: 100%;
-    box-sizing: border-box;
-    margin: 0;
-    padding: 1rem;
+    align-items: start;
 }
 
 .actionButtons {

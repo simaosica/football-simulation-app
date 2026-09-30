@@ -1,7 +1,8 @@
 // app/start/startPageClient.tsx
 'use client';
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { useSession, signOut } from 'next-auth/react';
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 import { Play, Pause } from "lucide-react";
 import { useLanguage } from '../i18n/languageContext';
 import Image from 'next/image';
@@ -20,6 +21,7 @@ import { formationsEqual } from './formationUtils';
 // Main Start Page Component
 export default function StartPage() {
   const { status, data: session } = useSession();
+  const router = useRouter();
   const { t, ready } = useLanguage();
   const formations = ['4-3-3', '4-4-2'] as const satisfies readonly (keyof typeof formationLayouts)[];
   const opponentFormations = ['4-4-2'] as const satisfies readonly (keyof typeof opponentFormationLayouts)[];
@@ -120,7 +122,6 @@ export default function StartPage() {
   const [opponentNameWarning, setOpponentNameWarning] = useState('');
   const opponentSaveInputRef = useRef<HTMLInputElement>(null);
   const [showDeleteOpponentModal, setShowDeleteOpponentModal] = useState(false);
-  const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [opponentFormationToDelete, setOpponentFormationToDelete] = useState<number | null>(null);
 
 
@@ -865,26 +866,6 @@ export default function StartPage() {
         </>)}
       </Modal>
 
-      <Modal open={showLogoutModal}>
-        <p>{t.logoutQuestion}</p>
-
-        <div className={modalStyles.modalActions}>
-          <button className={modalStyles.confirmButtonSave}
-            onClick={() => {
-              sessionStorage.removeItem("passwordPromptShown");
-              setShowLogoutModal(false);
-              signOut({ callbackUrl: "/" });
-            }}
-          >
-            {t.confirm}
-          </button>
-          
-          <button className={modalStyles.cancelButton} onClick={() => setShowLogoutModal(false)}>
-            {t.cancel}
-          </button>
-        </div>
-      </Modal>
-
       {isTacticsMode && (
         <div className={styles.tacticsWrapper}>
           <TacticalIdeasPanel
@@ -897,9 +878,16 @@ export default function StartPage() {
       <div className={styles.actionButtons}>
         <button className={styles.returnButton}
           onClick={() => {
-            if (isSimulationMode) resetDynamicPlay();
-            if (isSetupMode) setShowLogoutModal(true);
-            else setAppStep("SETUP");
+            if (isSetupMode) {
+              router.push("/team");
+              return;
+            }
+          
+            if (isSimulationMode) {
+              resetDynamicPlay();
+            }
+          
+            setAppStep("SETUP");
           }}
         >
           {t.return}

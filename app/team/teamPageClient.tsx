@@ -281,7 +281,7 @@ export default function TeamPageClient() {
 
             {teamStep === "SQUAD" && (
                 <>
-                    <h1 className={styles.title}>MY SQUAD</h1>
+                    <h1 className={styles.heading}>MY SQUAD</h1>
 
                     <div className={styles.squadGrid}>
 
@@ -724,7 +724,7 @@ export default function TeamPageClient() {
 
             {teamStep === "STARTING_XI" && (
                 <>
-                    <h1 className={styles.title}>STARTING XI</h1>
+                    <h1 className={styles.heading}>STARTING XI</h1>
             
                     <div>
                         <label>FORMATION</label>
