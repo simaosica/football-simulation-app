@@ -158,19 +158,19 @@ export default function TeamPageClient() {
                 const updatedPlayer = await response.json();
     
                 setSquad((currentSquad) =>
-                    currentSquad.map((player) =>
+                    [...currentSquad.map((player) =>
                         player.id === editingPlayerId
                             ? {
-                                  id: updatedPlayer.id,
-                                  name: updatedPlayer.name,
-                                  photo: updatedPlayer.photo ?? undefined,
-                                  shirtNumber: updatedPlayer.shirtNumber,
-                                  role: updatedPlayer.role,
-                                  position: updatedPlayer.position,
-                                  profile: updatedPlayer.profile,
-                              }
+                                id: updatedPlayer.id,
+                                name: updatedPlayer.name,
+                                photo: updatedPlayer.photo ?? undefined,
+                                shirtNumber: updatedPlayer.shirtNumber,
+                                role: updatedPlayer.role,
+                                position: updatedPlayer.position,
+                                profile: updatedPlayer.profile,
+                            }
                             : player
-                    )
+                    )].sort((a, b) => a.shirtNumber - b.shirtNumber)
                 );
             } else {
                 const response = await fetch("/api/team", {
@@ -209,10 +209,9 @@ export default function TeamPageClient() {
                     profile: createdPlayer.profile,
                 };
     
-                setSquad((currentSquad) => [
-                    ...currentSquad,
-                    newPlayer,
-                ]);
+                setSquad((currentSquad) =>
+                    [...currentSquad, newPlayer].sort((a, b) => a.shirtNumber - b.shirtNumber)
+                );
             }
     
             closeAddPlayerModal();
