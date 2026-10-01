@@ -9,7 +9,7 @@ import Image from 'next/image';
 import styles from './page.module.css';
 import modalStyles from '@/app/components/modal/modal.module.css';
 import Modal from '@/app/components/modal/modal';
-import { PlayerState, AppStep, TacticalProfile } from '@/engine/models/types';
+import { PlayerState, SquadPlayer, FormationSlot, AppStep, TacticalProfile } from '@/engine/models/types';
 import { getRoleFromPosition, formationLayouts, opponentFormationLayouts, PLAYER_PROFILE_CATALOG } from '@/engine/models/constants';
 import Pitch from './pitch';
 import useFormationManager from './useFormationManager';
@@ -26,7 +26,13 @@ export default function StartPage() {
   const formations = ['4-3-3', '4-4-2'] as const satisfies readonly (keyof typeof formationLayouts)[];
   const opponentFormations = ['4-4-2'] as const satisfies readonly (keyof typeof opponentFormationLayouts)[];
   const [appStep, setAppStep] = useState<AppStep>("SETUP");
+  const [mainFormationSlots, setMainFormationSlots] = useState<FormationSlot[]>(
+    formationLayouts["4-3-3"]
+  );
+  const [selectedFormationSlot, setSelectedFormationSlot] = useState<number | null>(null);
+  const [squad, setSquad] = useState<SquadPlayer[]>([]);
   const {
+    formation: mainFormation,
     setFormation: setMainTeamFormation,
     players: mainPlayers,
     setPlayers: setMainPlayers,
@@ -126,6 +132,27 @@ export default function StartPage() {
         }
       });
   }, [session, status]);
+
+  useEffect(() => {
+    if (status !== "authenticated") return;
+  
+    const loadSquad = async () => {
+      try {
+        const response = await fetch("/api/team");
+  
+        if (!response.ok) {
+          throw new Error("Failed to load squad");
+        }
+  
+        const players = await response.json();
+        setSquad(players as SquadPlayer[]);
+      } catch (error) {
+        console.error("Failed to load squad:", error);
+      }
+    };
+  
+    loadSquad();
+  }, [status]);
   
 
   // Open save modal and focus input
@@ -153,6 +180,45 @@ export default function StartPage() {
     setOriginalPhoto(mainPlayers[index].photo);
     setOriginalShirtNumber(mainPlayers[index].shirtNumber);
     setEditingPlayerIndex(index);
+  };
+
+  const handleSelectSquadPlayer = (player: SquadPlayer) => {
+    if (selectedFormationSlot === null) return;
+  
+    const slot = mainFormationSlots[selectedFormationSlot];
+    if (!slot) return;
+  
+    const newPlayer: PlayerState = {
+      x: slot.x,
+      y: slot.y,
+      formationX: slot.formationX,
+      formationY: slot.formationY,
+      team: "MAIN",
+      photo: player.photo,
+      shirtNumber: player.shirtNumber,
+      role: player.role,
+      position: player.position,
+      profile: player.profile,
+    };
+  
+    const updatedPlayers = [...mainPlayers];
+  
+    // Replace player if this slot already has one
+    const existingIndex = updatedPlayers.findIndex(
+      (p) =>
+        p.formationX === slot.formationX &&
+        p.formationY === slot.formationY
+    );
+  
+    if (existingIndex !== -1) {
+      updatedPlayers[existingIndex] = newPlayer;
+    } else {
+      updatedPlayers.push(newPlayer);
+    }
+  
+    setMainPlayers(updatedPlayers);
+    setPlayerMoved(true);
+    setSelectedFormationSlot(null);
   };
 
   const closeDeleteModal = () => {
@@ -203,11 +269,8 @@ export default function StartPage() {
   } 
 
   const allMainTeamFormations = useMemo(() => {
-    return [
-      ...formations.map(f => formationLayouts[f]), // base formations
-      ...savedFormations.map(f => f.players) // saved formations
-    ];
-  }, [formations, savedFormations]);
+    return savedFormations.map(f => f.players);
+  }, [savedFormations]);
 
   const allOpponentTeamFormations = useMemo(() => {
     return [
@@ -218,9 +281,13 @@ export default function StartPage() {
 
   const positionsChanged = useMemo(() => {
     if (editingPlayerIndex !== null) return false;
-
-    const matchesExisting = allMainTeamFormations.some(existing => formationsEqual(mainPlayers, existing));
-    return !matchesExisting; // You can save only if it matches NONE
+    if (mainPlayers.length === 0) return false;
+  
+    const matchesExisting = allMainTeamFormations.some(existing =>
+      formationsEqual(mainPlayers, existing)
+    );
+  
+    return !matchesExisting;
   }, [mainPlayers, allMainTeamFormations, editingPlayerIndex]);
   
   const opponentPlayersChanged = useMemo(() => {
@@ -239,8 +306,24 @@ export default function StartPage() {
       {/* Football Field */}
       {!isTacticsMode &&<div className={styles.fieldWrapper}>
         <Pitch
+          mainFormationSlots={mainFormationSlots}
           mainPlayers={isSimulationMode ? gameState.mainPlayers : mainPlayers}
-          opponentPlayers={isSimulationMode ? gameState.opponentPlayers : opponentPlayers}          
+          opponentPlayers={isSimulationMode ? gameState.opponentPlayers : opponentPlayers}
+          onFormationSlotClick={(index) => {
+            const slot = mainFormationSlots[index];
+          
+            const alreadyAssigned = mainPlayers.some(
+              (player) =>
+                player.formationX === slot.formationX &&
+                player.formationY === slot.formationY
+            );
+          
+            if (alreadyAssigned) {
+              return;
+            }
+          
+            setSelectedFormationSlot(index);
+          }}   
           mainRefs={mainRefs}
           opponentRefs={opponentRefs}
           onPlayerStop={(index, x, y) => {
@@ -330,9 +413,10 @@ export default function StartPage() {
                 <button key={formation}
                   onClick={() => {
                     setMainTeamFormation(formation);
+                    setMainFormationSlots(formationLayouts[formation]);
                   }}
                   className={`${styles.formationButton} ${
-                    formationsEqual(mainPlayers, formationLayouts[formation])
+                    mainFormation === formation
                       ? styles.formationButtonSelected
                       : ''
                   }`}
@@ -630,6 +714,70 @@ export default function StartPage() {
           
           <button className={modalStyles.cancelButton} onClick={closeSaveOpponentModal}>
             {t.cancel}
+          </button>
+        </div>
+      </Modal>
+
+
+      <Modal open={selectedFormationSlot !== null}>
+        <h2 className={modalStyles.modalLabel}>
+          SELECT PLAYER
+        </h2>
+
+        <div>
+          {squad
+            .filter((player) => {
+              if (selectedFormationSlot === null) return false;
+            
+              const slot = mainFormationSlots[selectedFormationSlot];
+            
+              return (
+                player.role === slot.role &&
+                !mainPlayers.some(
+                  (assignedPlayer) =>
+                    assignedPlayer.shirtNumber === player.shirtNumber
+                )
+              );
+            })
+            .map((player) => (
+              <button
+                key={player.id}
+                onClick={() => handleSelectSquadPlayer(player)}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "12px",
+                  width: "100%",
+                  padding: "10px",
+                  marginBottom: "8px",
+                  cursor: "pointer",
+                }}
+              >
+                {player.photo ? (
+                  <Image
+                    src={player.photo}
+                    alt=""
+                    width={45}
+                    height={45}
+                    unoptimized
+                  />
+                ) : (
+                  <span>{player.shirtNumber}</span>
+                )}
+
+                <span>
+                  {player.name} — {player.position}
+                </span>
+              </button>
+            ))}
+        </div>
+          
+        <div className={modalStyles.modalActions}>
+          <button
+            className={modalStyles.cancelButton}
+            onClick={() => setSelectedFormationSlot(null)}
+          >
+            CANCEL
           </button>
         </div>
       </Modal>

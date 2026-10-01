@@ -1,5 +1,5 @@
 // engine/models/constants.ts
-import { PlayerState, PlayerProfile } from './types';
+import { PlayerState, PlayerProfile, FormationSlot } from './types';
 
 /* ========================================== */
 /* PLAYER PROFILES */
@@ -247,33 +247,33 @@ export function getRoleFromPosition(position: PlayerState['position']): PlayerSt
 /* ========================================== */
 /* MAIN TEAM - 0 <= x <= 68 | 0 <= y <= 105 */
 /* ========================================== */
-// Define player positions for different formations
-export const formationLayouts: Record<string, PlayerState[]> = {
+// Define formation slots for different formations
+export const formationLayouts: Record<string, FormationSlot[]> = {
   '4-3-3': [
-    { x: 34, y: 102, formationX: 34, formationY: 102, team: 'MAIN', shirtNumber: 1,  role: 'GK',  position: 'GK',   profile: DEFAULT_GK_PROFILE },
-    { x: 4,  y: 90,  formationX: 4,  formationY: 90,  team: 'MAIN', shirtNumber: 5,  role: 'DEF', position: 'LB',   profile: DEFAULT_FULLBACK_PROFILE },
-    { x: 20, y: 97,  formationX: 20, formationY: 97,  team: 'MAIN', shirtNumber: 4,  role: 'DEF', position: 'LCB',  profile: DEFAULT_CB_PROFILE },
-    { x: 48, y: 97,  formationX: 48, formationY: 97,  team: 'MAIN', shirtNumber: 3,  role: 'DEF', position: 'RCB',  profile: DEFAULT_CB_PROFILE },
-    { x: 64, y: 90,  formationX: 64, formationY: 90,  team: 'MAIN', shirtNumber: 2,  role: 'DEF', position: 'RB',   profile: DEFAULT_FULLBACK_PROFILE },
-    { x: 20, y: 78,  formationX: 20, formationY: 78,  team: 'MAIN', shirtNumber: 6,  role: 'MID', position: 'LCDM', profile: DEFAULT_MIDFIELDER_PROFILE },
-    { x: 34, y: 68,  formationX: 34, formationY: 68,  team: 'MAIN', shirtNumber: 10, role: 'MID', position: 'CM',   profile: RISKY_MIDFIELDER_PROFILE },
-    { x: 48, y: 78,  formationX: 48, formationY: 78,  team: 'MAIN', shirtNumber: 8,  role: 'MID', position: 'RCDM', profile: DEFAULT_MIDFIELDER_PROFILE },
-    { x: 6,  y: 58,  formationX: 6,  formationY: 58,  team: 'MAIN', shirtNumber: 11, role: 'FWD', position: 'LW',   profile: WINGER_PROFILE },
-    { x: 34, y: 54,  formationX: 34, formationY: 54,  team: 'MAIN', shirtNumber: 9,  role: 'FWD', position: 'ST',   profile: STRIKER_PROFILE },
-    { x: 62, y: 58,  formationX: 62, formationY: 58,  team: 'MAIN', shirtNumber: 7,  role: 'FWD', position: 'RW',   profile: WINGER_PROFILE }
+    { x: 34, y: 102, formationX: 34, formationY: 102, team: 'MAIN', role: 'GK',  position: 'GK'   },
+    { x: 4,  y: 90,  formationX: 4,  formationY: 90,  team: 'MAIN', role: 'DEF', position: 'LB'   },
+    { x: 20, y: 97,  formationX: 20, formationY: 97,  team: 'MAIN', role: 'DEF', position: 'LCB'  },
+    { x: 48, y: 97,  formationX: 48, formationY: 97,  team: 'MAIN', role: 'DEF', position: 'RCB'  },
+    { x: 64, y: 90,  formationX: 64, formationY: 90,  team: 'MAIN', role: 'DEF', position: 'RB'   },
+    { x: 20, y: 78,  formationX: 20, formationY: 78,  team: 'MAIN', role: 'MID', position: 'LCDM' },
+    { x: 34, y: 68,  formationX: 34, formationY: 68,  team: 'MAIN', role: 'MID', position: 'CM'   },
+    { x: 48, y: 78,  formationX: 48, formationY: 78,  team: 'MAIN', role: 'MID', position: 'RCDM' },
+    { x: 6,  y: 58,  formationX: 6,  formationY: 58,  team: 'MAIN', role: 'FWD', position: 'LW'   },
+    { x: 34, y: 54,  formationX: 34, formationY: 54,  team: 'MAIN', role: 'FWD', position: 'ST'   },
+    { x: 62, y: 58,  formationX: 62, formationY: 58,  team: 'MAIN', role: 'FWD', position: 'RW'   }
   ],
   '4-4-2': [
-    { x: 34, y: 102, formationX: 34, formationY: 102, team: 'MAIN', shirtNumber: 1,  role: 'GK',  position: 'GK',  profile: DEFAULT_GK_PROFILE },
-    { x: 4,  y: 90,  formationX: 4,  formationY: 90,  team: 'MAIN', shirtNumber: 5,  role: 'DEF', position: 'LB',  profile: DEFAULT_FULLBACK_PROFILE },
-    { x: 20, y: 97,  formationX: 20, formationY: 97,  team: 'MAIN', shirtNumber: 4,  role: 'DEF', position: 'LCB', profile: DEFAULT_CB_PROFILE },
-    { x: 48, y: 97,  formationX: 48, formationY: 97,  team: 'MAIN', shirtNumber: 3,  role: 'DEF', position: 'RCB', profile: DEFAULT_CB_PROFILE },
-    { x: 64, y: 90,  formationX: 64, formationY: 90,  team: 'MAIN', shirtNumber: 2,  role: 'DEF', position: 'RB',  profile: DEFAULT_FULLBACK_PROFILE },
-    { x: 22, y: 74,  formationX: 22, formationY: 74,  team: 'MAIN', shirtNumber: 6,  role: 'MID', position: 'LCM', profile: DEFAULT_MIDFIELDER_PROFILE },
-    { x: 46, y: 74,  formationX: 46, formationY: 74,  team: 'MAIN', shirtNumber: 8,  role: 'MID', position: 'RCM', profile: DEFAULT_MIDFIELDER_PROFILE },
-    { x: 5,  y: 70,  formationX: 5,  formationY: 70,  team: 'MAIN', shirtNumber: 11, role: 'MID', position: 'LM',  profile: WINGER_PROFILE },
-    { x: 63, y: 70,  formationX: 63, formationY: 70,  team: 'MAIN', shirtNumber: 7,  role: 'MID', position: 'RM',  profile: WINGER_PROFILE },
-    { x: 24, y: 57,  formationX: 24, formationY: 57,  team: 'MAIN', shirtNumber: 9,  role: 'FWD', position: 'ST',  profile: STRIKER_PROFILE },
-    { x: 44, y: 57,  formationX: 44, formationY: 57,  team: 'MAIN', shirtNumber: 10, role: 'FWD', position: 'ST',  profile: STRIKER_PROFILE }
+    { x: 34, y: 102, formationX: 34, formationY: 102, team: 'MAIN', role: 'GK',  position: 'GK'  },
+    { x: 4,  y: 90,  formationX: 4,  formationY: 90,  team: 'MAIN', role: 'DEF', position: 'LB'  },
+    { x: 20, y: 97,  formationX: 20, formationY: 97,  team: 'MAIN', role: 'DEF', position: 'LCB' },
+    { x: 48, y: 97,  formationX: 48, formationY: 97,  team: 'MAIN', role: 'DEF', position: 'RCB' },
+    { x: 64, y: 90,  formationX: 64, formationY: 90,  team: 'MAIN', role: 'DEF', position: 'RB'  },
+    { x: 22, y: 74,  formationX: 22, formationY: 74,  team: 'MAIN', role: 'MID', position: 'LCM' },
+    { x: 46, y: 74,  formationX: 46, formationY: 74,  team: 'MAIN', role: 'MID', position: 'RCM' },
+    { x: 5,  y: 70,  formationX: 5,  formationY: 70,  team: 'MAIN', role: 'MID', position: 'LM'  },
+    { x: 63, y: 70,  formationX: 63, formationY: 70,  team: 'MAIN', role: 'MID', position: 'RM'  },
+    { x: 24, y: 57,  formationX: 24, formationY: 57,  team: 'MAIN', role: 'FWD', position: 'ST'  },
+    { x: 44, y: 57,  formationX: 44, formationY: 57,  team: 'MAIN', role: 'FWD', position: 'ST'  }
   ]
 };
 

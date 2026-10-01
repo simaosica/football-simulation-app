@@ -1,18 +1,34 @@
 // app/start/hooks/useFormationManager.ts
 import React, { createRef, useEffect, useRef, useState } from 'react';
-import { PlayerState, SavedFormation } from '@/engine/models/types';
+import { PlayerState, FormationSlot, SavedFormation } from '@/engine/models/types';
 import { normalizePlayers, createSnapshot, resetToLoaded } from "@/engine/formations/formationManager";
 
-export default function useFormationManager(baseLayouts: Record<string, PlayerState[]>, type: "MAIN" | "OPPONENT", initialFormation: string = Object.keys(baseLayouts)[0] as string, authStatus: string) {
+export default function useFormationManager(baseLayouts: Record<string, PlayerState[] | FormationSlot[]>, type: "MAIN" | "OPPONENT", initialFormation: string = Object.keys(baseLayouts)[0] as string, authStatus: string) {
   const [formation, setFormationState] = useState<string>(initialFormation);
-  const [players, setPlayers] = useState<PlayerState[]>(() => normalizePlayers(baseLayouts[initialFormation] ?? []));
+  const [players, setPlayers] = useState<PlayerState[]>(() => {
+    if (type === "MAIN") {
+      return [];
+    }
+  
+    return normalizePlayers(
+      (baseLayouts[initialFormation] ?? []) as PlayerState[]
+    );
+  });
   
   // refs stored in a ref so don't re-render when refs change
   const initialRefs = (baseLayouts[initialFormation] ?? []).map(() => createRef<HTMLDivElement>());
   const refsRef = useRef<React.RefObject<HTMLDivElement | null>[]>(initialRefs);
 
   const [moved, setMoved] = useState<boolean>(false);
-  const [currentLoaded, setCurrentLoaded] = useState<PlayerState[]>(() => normalizePlayers(baseLayouts[initialFormation] ?? []));
+  const [currentLoaded, setCurrentLoaded] = useState<PlayerState[]>(() => {
+    if (type === "MAIN") {
+      return [];
+    }
+  
+    return normalizePlayers(
+      (baseLayouts[initialFormation] ?? []) as PlayerState[]
+    );
+  });
 
   const [savedFormations, setSavedFormations] = useState<SavedFormation[]>([]);
 
@@ -41,7 +57,16 @@ export default function useFormationManager(baseLayouts: Record<string, PlayerSt
   function setFormation(newFormation: string) {
     setFormationState(newFormation);
     const base = baseLayouts[newFormation] ?? [];
-    const normalized = normalizePlayers(base);
+  
+    if (type === "MAIN") {
+      setPlayers([]);
+      setCurrentLoaded([]);
+      refsRef.current = base.map(() => createRef<HTMLDivElement>());
+      setMoved(false);
+      return;
+    }
+  
+    const normalized = normalizePlayers(base as PlayerState[]);
     setPlayers(normalized);
     setCurrentLoaded(normalized);
     refsRef.current = normalized.map(() => createRef<HTMLDivElement>());

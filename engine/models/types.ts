@@ -35,12 +35,22 @@ export type PlayerState = {
   profile: PlayerProfile;
 };
 
+export type FormationSlot = {
+  x: number;
+  y: number;
+  formationX: number;
+  formationY: number;
+  team: "MAIN";
+  role: PlayerState["role"];
+  position: PlayerState["position"];
+};
+
 export type SquadPlayer = {
   id: string;
   name: string;
   photo?: string;
   shirtNumber: number;
-  role: 'GK' | 'DEF' | 'MID' | 'FWD';
+  role: PlayerState["role"];
   position: PlayerState['position'];
   profile: PlayerProfile;
 };

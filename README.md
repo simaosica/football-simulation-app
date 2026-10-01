@@ -4,4 +4,4 @@ A web-based football simulation application developed as part of my Master's the
 
 **Live demo:** [Football Simulation](https://football-simulation-app.vercel.app/)
 
-**Grade:** 16/20
+**Grade:** 16/20 - Graded on 25/05/2026

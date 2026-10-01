@@ -6,7 +6,7 @@ import { PitchProps } from './uiTypes';
 import styles from './page.module.css';
 import { PITCH_WIDTH, PITCH_LENGTH } from '@/engine/core/geometry';
 
-export default function Pitch({mainPlayers, opponentPlayers, mainRefs, opponentRefs, onPlayerStop, onOpponentStop, gameState, isSimulationMode, onEditPlayer, passDebugLines, decisionPressure}: PitchProps) {
+export default function Pitch({mainFormationSlots, mainPlayers, opponentPlayers, onFormationSlotClick, mainRefs, opponentRefs, onPlayerStop, onOpponentStop, gameState, isSimulationMode, onEditPlayer, passDebugLines, decisionPressure}: PitchProps) {
   const pitchRef = useRef<HTMLDivElement>(null);
   const [pitchSize, setPitchSize] = useState({ width: 0, height: 0 });
   const scaleX = pitchSize.width / PITCH_WIDTH;
@@ -67,6 +67,37 @@ export default function Pitch({mainPlayers, opponentPlayers, mainRefs, opponentR
             </div>
           )}
           {/* Pass Debug Overlay - END */}
+
+
+          {mainFormationSlots.map((slot, i) => {
+            const occupied = mainPlayers.some(
+              (player) =>
+                player.formationX === slot.formationX &&
+                player.formationY === slot.formationY
+            );
+          
+            if (occupied) return null;
+          
+            return (
+              <div
+                key={`slot-${i}`}
+                onClick={() => onFormationSlotClick(i)}
+                style={{
+                  position: 'absolute',
+                  left: `${slot.x * scaleX}px`,
+                  top: `${slot.y * scaleY}px`,
+                  width: '40px',
+                  height: '40px',
+                  border: '2px dashed white',
+                  borderRadius: '50%',
+                  transform: 'translate(-50%, -50%)',
+                  background: 'rgba(255, 255, 255, 0.15)',
+                  zIndex: 5,
+                  cursor: 'pointer',
+                }}
+              />
+            );
+          })}
         
         
           {mainPlayers.map((pos, i) => (

@@ -65,7 +65,12 @@ export default function useSimulationController({
     const mainGK = mainPlayers[0];
 
     return {
-      ball: { x: mainGK.x, y: mainGK.y, holderIndex: 0, target: null },
+      ball: {
+        x: mainGK?.x ?? 34,
+        y: mainGK?.y ?? 102,
+        holderIndex: mainGK ? 0 : null,
+        target: null
+      },
       mainPlayers: structuredClone(mainPlayers),
       opponentPlayers: structuredClone(opponentPlayers),
       buildUpStarted: false,
