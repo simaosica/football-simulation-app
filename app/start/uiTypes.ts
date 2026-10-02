@@ -1,6 +1,6 @@
 // app/start/uiTypes.ts
 import React from "react";
-import { PlayerState, GameState, PassDebugLine, FormationSlot } from "@/engine/models/types";
+import { PlayerState, GameState, PassDebugLine, FormationSlot, SquadPlayer } from "@/engine/models/types";
 
 // Define the properties for the Player component
 export type PlayerProps = {
@@ -17,6 +17,7 @@ export type PlayerProps = {
 // Define the properties for the Pitch component
 export type PitchProps = {
   mainFormationSlots: FormationSlot[];
+  squad: SquadPlayer[];
   mainPlayers: PlayerState[];
   opponentPlayers: PlayerState[];
   onFormationSlotClick: (index: number) => void;

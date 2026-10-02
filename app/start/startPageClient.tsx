@@ -26,19 +26,20 @@ export default function StartPage() {
   const formations = ['4-3-3', '4-4-2'] as const satisfies readonly (keyof typeof formationLayouts)[];
   const opponentFormations = ['4-4-2'] as const satisfies readonly (keyof typeof opponentFormationLayouts)[];
   const [appStep, setAppStep] = useState<AppStep>("SETUP");
-  const [mainFormationSlots, setMainFormationSlots] = useState<FormationSlot[]>(
-    formationLayouts["4-3-3"]
-  );
   const [selectedFormationSlot, setSelectedFormationSlot] = useState<number | null>(null);
   const [squad, setSquad] = useState<SquadPlayer[]>([]);
   const {
     formation: mainFormation,
     setFormation: setMainTeamFormation,
     players: mainPlayers,
+    formationSlots: mainFormationSlots,
+    setFormationSlots: setMainFormationSlots,
+    resetFormationSlots: resetMainFormationSlots,
     setPlayers: setMainPlayers,
     refs: mainRefs,
     setMoved: setPlayerMoved,
     currentLoaded: currentLoadedFormation,
+    currentLoadedSlots: currentLoadedFormationSlots,
     savedFormations,
     loadSavedFormation,
     saveFormation,
@@ -86,6 +87,31 @@ export default function StartPage() {
     maxPasses: 10
   });
 
+  const simulationMainPlayers = useMemo<PlayerState[]>(() => {
+    return mainFormationSlots.flatMap((slot) => {
+      if (slot.playerId === null) return [];
+  
+      const squadPlayer = squad.find(
+        (player) => player.id === slot.playerId
+      );
+  
+      if (!squadPlayer) return [];
+  
+      return [{
+        x: slot.x,
+        y: slot.y,
+        formationX: slot.formationX,
+        formationY: slot.formationY,
+        team: "MAIN",
+        photo: squadPlayer.photo,
+        shirtNumber: squadPlayer.shirtNumber,
+        role: squadPlayer.role,
+        position: squadPlayer.position,
+        profile: squadPlayer.profile,
+      }];
+    });
+  }, [mainFormationSlots, squad]);
+
   const {
     gameState,
     isPlaying,
@@ -104,7 +130,7 @@ export default function StartPage() {
     togglePausePlay,
     resetSimulationSession,
   } = useSimulationController({
-    mainPlayers,
+    mainPlayers: simulationMainPlayers,
     opponentPlayers,
     tacticalProfile,
   });
@@ -171,14 +197,24 @@ export default function StartPage() {
     setTimeout(() => { opponentSaveInputRef.current?.focus(); }, 0);
   };
 
-  // Handle editing player position
+  // Handle editing player
   const handleEditPlayer = (index: number) => {
     if (!isSetupMode) return;
-    setOriginalRole(mainPlayers[index].role);
-    setOriginalPosition(mainPlayers[index].position);
-    setOriginalProfile(mainPlayers[index].profile);
-    setOriginalPhoto(mainPlayers[index].photo);
-    setOriginalShirtNumber(mainPlayers[index].shirtNumber);
+  
+    const slot = mainFormationSlots[index];
+    if (!slot || slot.playerId === null) return;
+  
+    const squadPlayer = squad.find(
+      (player) => player.id === slot.playerId
+    );
+  
+    if (!squadPlayer) return;
+  
+    setOriginalRole(squadPlayer.role);
+    setOriginalPosition(squadPlayer.position);
+    setOriginalProfile(squadPlayer.profile);
+    setOriginalPhoto(squadPlayer.photo);
+    setOriginalShirtNumber(squadPlayer.shirtNumber);
     setEditingPlayerIndex(index);
   };
 
@@ -188,35 +224,15 @@ export default function StartPage() {
     const slot = mainFormationSlots[selectedFormationSlot];
     if (!slot) return;
   
-    const newPlayer: PlayerState = {
-      x: slot.x,
-      y: slot.y,
-      formationX: slot.formationX,
-      formationY: slot.formationY,
-      team: "MAIN",
-      photo: player.photo,
-      shirtNumber: player.shirtNumber,
-      role: player.role,
-      position: player.position,
-      profile: player.profile,
+    const updatedSlots = [...mainFormationSlots];
+  
+    updatedSlots[selectedFormationSlot] = {
+      ...slot,
+      playerId: player.id,
     };
   
-    const updatedPlayers = [...mainPlayers];
+    setMainFormationSlots(updatedSlots);
   
-    // Replace player if this slot already has one
-    const existingIndex = updatedPlayers.findIndex(
-      (p) =>
-        p.formationX === slot.formationX &&
-        p.formationY === slot.formationY
-    );
-  
-    if (existingIndex !== -1) {
-      updatedPlayers[existingIndex] = newPlayer;
-    } else {
-      updatedPlayers.push(newPlayer);
-    }
-  
-    setMainPlayers(updatedPlayers);
     setPlayerMoved(true);
     setSelectedFormationSlot(null);
   };
@@ -246,27 +262,40 @@ export default function StartPage() {
   };
 
   const closeEditPlayerModal = () => {
-    if (editingPlayerIndex !== null && originalPosition !== null && originalRole !== null &&
-      originalProfile !== null && originalShirtNumber !== null
+    if (
+      editingPlayerIndex !== null &&
+      originalPosition !== null &&
+      originalRole !== null &&
+      originalProfile !== null &&
+      originalShirtNumber !== null
     ) {
-      const reverted = [...mainPlayers];
-      reverted[editingPlayerIndex] = {
-        ...reverted[editingPlayerIndex],
-        position: originalPosition,
-        role: originalRole,
-        profile: originalProfile,
-        photo: originalPhoto,
-        shirtNumber: originalShirtNumber,
-      };
-      setMainPlayers(reverted);
+      const slot = mainFormationSlots[editingPlayerIndex];
+  
+      if (slot?.playerId) {
+        setSquad((currentSquad) =>
+          currentSquad.map((player) =>
+            player.id === slot.playerId
+              ? {
+                  ...player,
+                  position: originalPosition,
+                  role: originalRole,
+                  profile: originalProfile,
+                  photo: originalPhoto,
+                  shirtNumber: originalShirtNumber,
+                }
+              : player
+          )
+        );
+      }
     }
+  
     setEditingPlayerIndex(null);
     setOriginalPosition(null);
     setOriginalRole(null);
     setOriginalProfile(null);
     setOriginalPhoto(undefined);
     setOriginalShirtNumber(null);
-  } 
+  };
 
   const allMainTeamFormations = useMemo(() => {
     return savedFormations.map(f => f.players);
@@ -281,14 +310,21 @@ export default function StartPage() {
 
   const positionsChanged = useMemo(() => {
     if (editingPlayerIndex !== null) return false;
-    if (mainPlayers.length === 0) return false;
   
-    const matchesExisting = allMainTeamFormations.some(existing =>
-      formationsEqual(mainPlayers, existing)
-    );
+    const baseSlots = formationLayouts[mainFormation];
   
-    return !matchesExisting;
-  }, [mainPlayers, allMainTeamFormations, editingPlayerIndex]);
+    return mainFormationSlots.some((slot, index) => {
+      const baseSlot = baseSlots[index];
+  
+      if (!baseSlot) return false;
+  
+      return (
+        slot.x !== baseSlot.x ||
+        slot.y !== baseSlot.y ||
+        slot.playerId !== baseSlot.playerId
+      );
+    });
+  }, [mainFormationSlots, mainFormation, editingPlayerIndex]);
   
   const opponentPlayersChanged = useMemo(() => {
     if (editingPlayerIndex !== null) return false;
@@ -297,7 +333,7 @@ export default function StartPage() {
     return !matchesExisting; // You can save only if it matches NONE
   }, [opponentPlayers, allOpponentTeamFormations, editingPlayerIndex]);
 
-  const isGK = editingPlayerIndex !== null && mainPlayers[editingPlayerIndex].position === "GK";
+  const isGK = editingPlayerIndex !== null && mainFormationSlots[editingPlayerIndex]?.position === "GK";
 
   if (status === "loading") return null;
   if (!ready) return null;
@@ -307,29 +343,28 @@ export default function StartPage() {
       {!isTacticsMode &&<div className={styles.fieldWrapper}>
         <Pitch
           mainFormationSlots={mainFormationSlots}
+          squad={squad}
           mainPlayers={isSimulationMode ? gameState.mainPlayers : mainPlayers}
           opponentPlayers={isSimulationMode ? gameState.opponentPlayers : opponentPlayers}
           onFormationSlotClick={(index) => {
             const slot = mainFormationSlots[index];
           
-            const alreadyAssigned = mainPlayers.some(
-              (player) =>
-                player.formationX === slot.formationX &&
-                player.formationY === slot.formationY
-            );
-          
-            if (alreadyAssigned) {
-              return;
-            }
-          
+            if (slot.playerId !== null) return;
+
             setSelectedFormationSlot(index);
           }}   
           mainRefs={mainRefs}
           opponentRefs={opponentRefs}
           onPlayerStop={(index, x, y) => {
-            const updated = [...mainPlayers];
-            updated[index] = { ...updated[index], x, y };
-            setMainPlayers(updated);
+            const updatedSlots = [...mainFormationSlots];
+          
+            updatedSlots[index] = {
+              ...updatedSlots[index],
+              x,
+              y,
+            };
+          
+            setMainFormationSlots(updatedSlots);
             setPlayerMoved(true);
           }}
           onOpponentStop={(index, x, y) => {
@@ -413,7 +448,6 @@ export default function StartPage() {
                 <button key={formation}
                   onClick={() => {
                     setMainTeamFormation(formation);
-                    setMainFormationSlots(formationLayouts[formation]);
                   }}
                   className={`${styles.formationButton} ${
                     mainFormation === formation
@@ -450,7 +484,15 @@ export default function StartPage() {
                 
             {/* Reset Button */}
             <button className={styles.resetButton} disabled={!positionsChanged}
-              onClick={() => setMainPlayers(currentLoadedFormation)}
+              onClick={() => {
+                setMainFormationSlots(
+                  currentLoadedFormationSlots.map((slot) => ({
+                    ...slot,
+                  }))
+                );
+              
+                setPlayerMoved(false);
+              }}
             >{t.resetChanges}</button>
 
             <button className={styles.saveButton} disabled={!positionsChanged}
@@ -733,9 +775,9 @@ export default function StartPage() {
             
               return (
                 player.role === slot.role &&
-                !mainPlayers.some(
-                  (assignedPlayer) =>
-                    assignedPlayer.shirtNumber === player.shirtNumber
+                !mainFormationSlots.some(
+                  (formationSlot) =>
+                    formationSlot.playerId === player.id
                 )
               );
             })
@@ -784,15 +826,25 @@ export default function StartPage() {
 
 
       <Modal open={editingPlayerIndex !== null}>
-        {editingPlayerIndex !== null && (<>
+        {editingPlayerIndex !== null && (() => {
+          const slot = mainFormationSlots[editingPlayerIndex];
+        
+          const squadPlayer = slot?.playerId
+            ? squad.find((player) => player.id === slot.playerId)
+            : null;
+        
+          if (!squadPlayer) return null;
+        
+          return (
+            <>
           <label className={modalStyles.modalLabel}>
             PLAYER PHOTO
           </label>
 
           <div className={modalStyles.photoUpload}>
-            {mainPlayers[editingPlayerIndex].photo ? (
+            {squadPlayer.photo ? (
               <Image
-                src={mainPlayers[editingPlayerIndex].photo}
+                src={squadPlayer.photo}
                 alt="Player"
                 width={70}
                 height={70}
@@ -805,9 +857,9 @@ export default function StartPage() {
             )}
 
             <label className={modalStyles.photoButton}>
-              {mainPlayers[editingPlayerIndex].photo
-                ? "CHANGE PHOTO"
-                : "CHOOSE PHOTO"}
+              {squadPlayer.photo
+              ? "CHANGE PHOTO"
+              : "CHOOSE PHOTO"}
 
               <input
                 type="file"
@@ -820,14 +872,19 @@ export default function StartPage() {
                   const reader = new FileReader();
                 
                   reader.onload = () => {
-                    const updated = [...mainPlayers];
+                    const newPhoto = reader.result as string;
                   
-                    updated[editingPlayerIndex] = {
-                      ...updated[editingPlayerIndex],
-                      photo: reader.result as string,
-                    };
+                    setSquad((currentSquad) =>
+                      currentSquad.map((player) =>
+                        player.id === squadPlayer.id
+                          ? {
+                              ...player,
+                              photo: newPhoto,
+                            }
+                          : player
+                      )
+                    );
                   
-                    setMainPlayers(updated);
                     setPlayerMoved(true);
                   };
                 
@@ -842,19 +899,23 @@ export default function StartPage() {
               {t.position}
             </label>
             
-            <select className={modalStyles.modalSelect} value={mainPlayers[editingPlayerIndex].position}
+            <select className={modalStyles.modalSelect} value={squadPlayer.position}
               onChange={(e) => {
                 const newPosition = e.target.value as PlayerState["position"];
                 const newRole = getRoleFromPosition(newPosition);
               
-                const updated = [...mainPlayers];
-                updated[editingPlayerIndex] = {
-                  ...updated[editingPlayerIndex],
-                  position: newPosition,
-                  role: newRole,
-                };
+                setSquad((currentSquad) =>
+                  currentSquad.map((player) =>
+                    player.id === squadPlayer.id
+                      ? {
+                          ...player,
+                          position: newPosition,
+                          role: newRole,
+                        }
+                      : player
+                  )
+                );
               
-                setMainPlayers(updated);
                 setPlayerMoved(true);
               }}
             >
@@ -888,43 +949,59 @@ export default function StartPage() {
             {t.shirtNumber}
           </label>
         
-          <select className={modalStyles.modalSelect} value={mainPlayers[editingPlayerIndex].shirtNumber}
+          <select className={modalStyles.modalSelect} value={squadPlayer.shirtNumber}
             onChange={(e) => {
               const newNumber = Number(e.target.value);
             
-              const updated = [...mainPlayers];
-              updated[editingPlayerIndex] = {
-                ...updated[editingPlayerIndex],
-                shirtNumber: newNumber,
-              };
+              setSquad((currentSquad) =>
+                currentSquad.map((player) =>
+                  player.id === squadPlayer.id
+                    ? {
+                        ...player,
+                        shirtNumber: newNumber,
+                      }
+                    : player
+                )
+              );
             
-              setMainPlayers(updated);
               setPlayerMoved(true);
             }}
           >
             {Array.from({ length: 99 }, (_, i) => i + 1).filter((num) =>
-              num === mainPlayers[editingPlayerIndex].shirtNumber ||
-              !mainPlayers.some((p, idx) => idx !== editingPlayerIndex && p.shirtNumber === num)
-              ).map((num) => (<option key={num} value={num}>{num}</option>))}
-            </select>
+              num === squadPlayer.shirtNumber ||
+              !squad.some((player) =>
+                player.id !== squadPlayer.id &&
+                player.shirtNumber === num
+              )
+            ).map((num) => (
+              <option key={num} value={num}>
+                {num}
+              </option>
+            ))}
+          </select>
               
           <label className={modalStyles.modalLabel}>
             {t.profile}
           </label>
               
           <select className={modalStyles.modalSelect}
-            value={ Object.entries(PLAYER_PROFILE_CATALOG).find(([, profile]) =>
-              profile.name === mainPlayers[editingPlayerIndex].profile.name)?.[0] ?? "DEFAULT"}
+            value={Object.entries(PLAYER_PROFILE_CATALOG).find(([, profile]) =>
+              profile.name === squadPlayer.profile.name
+            )?.[0] ?? "DEFAULT"}
             onChange={(e) => {
               const profileKey = e.target.value as keyof typeof PLAYER_PROFILE_CATALOG;
             
-              const updated = [...mainPlayers];
-              updated[editingPlayerIndex] = {
-                ...updated[editingPlayerIndex],
-                profile: PLAYER_PROFILE_CATALOG[profileKey],
-              };
+              setSquad((currentSquad) =>
+                currentSquad.map((player) =>
+                  player.id === squadPlayer.id
+                    ? {
+                        ...player,
+                        profile: PLAYER_PROFILE_CATALOG[profileKey],
+                      }
+                    : player
+                )
+              );
             
-              setMainPlayers(updated);
               setPlayerMoved(true);
             }}
           >
@@ -934,10 +1011,10 @@ export default function StartPage() {
           <div className={modalStyles.modalActions}>
             <button className={modalStyles.confirmButtonSave}
               disabled={
-                originalPhoto === mainPlayers[editingPlayerIndex].photo &&
-                originalPosition === mainPlayers[editingPlayerIndex].position &&
-                originalProfile === mainPlayers[editingPlayerIndex].profile &&
-                originalShirtNumber === mainPlayers[editingPlayerIndex].shirtNumber
+                originalPhoto === squadPlayer.photo &&
+                originalPosition === squadPlayer.position &&
+                originalProfile === squadPlayer.profile &&
+                originalShirtNumber === squadPlayer.shirtNumber
               }
               onClick={() => {
                 setEditingPlayerIndex(null);
@@ -955,7 +1032,9 @@ export default function StartPage() {
               {t.cancel}
             </button>
           </div>
-        </>)}
+            </>
+          );
+        })()}
       </Modal>
 
       {isTacticsMode && (

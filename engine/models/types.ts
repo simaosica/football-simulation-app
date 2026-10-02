@@ -43,6 +43,7 @@ export type FormationSlot = {
   team: "MAIN";
   role: PlayerState["role"];
   position: PlayerState["position"];
+  playerId: string | null;
 };
 
 export type SquadPlayer = {

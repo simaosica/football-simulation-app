@@ -5,8 +5,9 @@ import Player from './player';
 import { PitchProps } from './uiTypes';
 import styles from './page.module.css';
 import { PITCH_WIDTH, PITCH_LENGTH } from '@/engine/core/geometry';
+import { PlayerState } from '@/engine/models/types';
 
-export default function Pitch({mainFormationSlots, mainPlayers, opponentPlayers, onFormationSlotClick, mainRefs, opponentRefs, onPlayerStop, onOpponentStop, gameState, isSimulationMode, onEditPlayer, passDebugLines, decisionPressure}: PitchProps) {
+export default function Pitch({mainFormationSlots, squad, mainPlayers, opponentPlayers, onFormationSlotClick, mainRefs, opponentRefs, onPlayerStop, onOpponentStop, gameState, isSimulationMode, onEditPlayer, passDebugLines, decisionPressure}: PitchProps) {
   const pitchRef = useRef<HTMLDivElement>(null);
   const [pitchSize, setPitchSize] = useState({ width: 0, height: 0 });
   const scaleX = pitchSize.width / PITCH_WIDTH;
@@ -70,12 +71,8 @@ export default function Pitch({mainFormationSlots, mainPlayers, opponentPlayers,
 
 
           {mainFormationSlots.map((slot, i) => {
-            const occupied = mainPlayers.some(
-              (player) =>
-                player.formationX === slot.formationX &&
-                player.formationY === slot.formationY
-            );
-          
+            const occupied = slot.playerId !== null;
+
             if (occupied) return null;
           
             return (
@@ -100,15 +97,56 @@ export default function Pitch({mainFormationSlots, mainPlayers, opponentPlayers,
           })}
         
         
-          {mainPlayers.map((pos, i) => (
-            <Player key={i} index={i} pos={pos}
+        {isSimulationMode ? (
+          mainPlayers.map((pos, i) => (
+            <Player
+              key={i}
+              index={i}
+              pos={pos}
               pitchSize={pitchSize}
-              onStop={isSimulationMode ? () => {} : onPlayerStop}
+              onStop={() => {}}
               playerRef={mainRefs[i]}
-              isSimulationMode={isSimulationMode}
+              isSimulationMode
               onEdit={onEditPlayer}
             />
-          ))}
+          ))
+        ) : (
+          mainFormationSlots.map((slot, i) => {
+            if (slot.playerId === null) return null;
+          
+            const squadPlayer = squad.find(
+              (player) => player.id === slot.playerId
+            );
+          
+            if (!squadPlayer) return null;
+          
+            const playerState: PlayerState = {
+              x: slot.x,
+              y: slot.y,
+              formationX: slot.formationX,
+              formationY: slot.formationY,
+              team: "MAIN",
+              photo: squadPlayer.photo,
+              shirtNumber: squadPlayer.shirtNumber,
+              role: squadPlayer.role,
+              position: squadPlayer.position,
+              profile: squadPlayer.profile,
+            };
+          
+            return (
+              <Player
+                key={slot.playerId}
+                index={i}
+                pos={playerState}
+                pitchSize={pitchSize}
+                onStop={onPlayerStop}
+                playerRef={mainRefs[i]}
+                isSimulationMode={false}
+                onEdit={onEditPlayer}
+              />
+            );
+          })
+        )}
 
           {opponentPlayers.map((pos, i) => (
             <Player key={`opp-${i}`} index={i} pos={pos} pitchSize={pitchSize}

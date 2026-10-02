@@ -250,30 +250,30 @@ export function getRoleFromPosition(position: PlayerState['position']): PlayerSt
 // Define formation slots for different formations
 export const formationLayouts: Record<string, FormationSlot[]> = {
   '4-3-3': [
-    { x: 34, y: 102, formationX: 34, formationY: 102, team: 'MAIN', role: 'GK',  position: 'GK'   },
-    { x: 4,  y: 90,  formationX: 4,  formationY: 90,  team: 'MAIN', role: 'DEF', position: 'LB'   },
-    { x: 20, y: 97,  formationX: 20, formationY: 97,  team: 'MAIN', role: 'DEF', position: 'LCB'  },
-    { x: 48, y: 97,  formationX: 48, formationY: 97,  team: 'MAIN', role: 'DEF', position: 'RCB'  },
-    { x: 64, y: 90,  formationX: 64, formationY: 90,  team: 'MAIN', role: 'DEF', position: 'RB'   },
-    { x: 20, y: 78,  formationX: 20, formationY: 78,  team: 'MAIN', role: 'MID', position: 'LCDM' },
-    { x: 34, y: 68,  formationX: 34, formationY: 68,  team: 'MAIN', role: 'MID', position: 'CM'   },
-    { x: 48, y: 78,  formationX: 48, formationY: 78,  team: 'MAIN', role: 'MID', position: 'RCDM' },
-    { x: 6,  y: 58,  formationX: 6,  formationY: 58,  team: 'MAIN', role: 'FWD', position: 'LW'   },
-    { x: 34, y: 54,  formationX: 34, formationY: 54,  team: 'MAIN', role: 'FWD', position: 'ST'   },
-    { x: 62, y: 58,  formationX: 62, formationY: 58,  team: 'MAIN', role: 'FWD', position: 'RW'   }
+    { x: 34, y: 102, formationX: 34, formationY: 102, team: 'MAIN', role: 'GK',  position: 'GK',   playerId: null },
+    { x: 4,  y: 90,  formationX: 4,  formationY: 90,  team: 'MAIN', role: 'DEF', position: 'LB',   playerId: null},
+    { x: 20, y: 97,  formationX: 20, formationY: 97,  team: 'MAIN', role: 'DEF', position: 'LCB',  playerId: null},
+    { x: 48, y: 97,  formationX: 48, formationY: 97,  team: 'MAIN', role: 'DEF', position: 'RCB',  playerId: null},
+    { x: 64, y: 90,  formationX: 64, formationY: 90,  team: 'MAIN', role: 'DEF', position: 'RB',   playerId: null},
+    { x: 20, y: 78,  formationX: 20, formationY: 78,  team: 'MAIN', role: 'MID', position: 'LCDM', playerId: null},
+    { x: 34, y: 68,  formationX: 34, formationY: 68,  team: 'MAIN', role: 'MID', position: 'CM',   playerId: null},
+    { x: 48, y: 78,  formationX: 48, formationY: 78,  team: 'MAIN', role: 'MID', position: 'RCDM', playerId: null},
+    { x: 6,  y: 58,  formationX: 6,  formationY: 58,  team: 'MAIN', role: 'FWD', position: 'LW',   playerId: null},
+    { x: 34, y: 54,  formationX: 34, formationY: 54,  team: 'MAIN', role: 'FWD', position: 'ST',   playerId: null},
+    { x: 62, y: 58,  formationX: 62, formationY: 58,  team: 'MAIN', role: 'FWD', position: 'RW',   playerId: null}
   ],
   '4-4-2': [
-    { x: 34, y: 102, formationX: 34, formationY: 102, team: 'MAIN', role: 'GK',  position: 'GK'  },
-    { x: 4,  y: 90,  formationX: 4,  formationY: 90,  team: 'MAIN', role: 'DEF', position: 'LB'  },
-    { x: 20, y: 97,  formationX: 20, formationY: 97,  team: 'MAIN', role: 'DEF', position: 'LCB' },
-    { x: 48, y: 97,  formationX: 48, formationY: 97,  team: 'MAIN', role: 'DEF', position: 'RCB' },
-    { x: 64, y: 90,  formationX: 64, formationY: 90,  team: 'MAIN', role: 'DEF', position: 'RB'  },
-    { x: 22, y: 74,  formationX: 22, formationY: 74,  team: 'MAIN', role: 'MID', position: 'LCM' },
-    { x: 46, y: 74,  formationX: 46, formationY: 74,  team: 'MAIN', role: 'MID', position: 'RCM' },
-    { x: 5,  y: 70,  formationX: 5,  formationY: 70,  team: 'MAIN', role: 'MID', position: 'LM'  },
-    { x: 63, y: 70,  formationX: 63, formationY: 70,  team: 'MAIN', role: 'MID', position: 'RM'  },
-    { x: 24, y: 57,  formationX: 24, formationY: 57,  team: 'MAIN', role: 'FWD', position: 'ST'  },
-    { x: 44, y: 57,  formationX: 44, formationY: 57,  team: 'MAIN', role: 'FWD', position: 'ST'  }
+    { x: 34, y: 102, formationX: 34, formationY: 102, team: 'MAIN', role: 'GK',  position: 'GK',  playerId: null },
+    { x: 4,  y: 90,  formationX: 4,  formationY: 90,  team: 'MAIN', role: 'DEF', position: 'LB',  playerId: null },
+    { x: 20, y: 97,  formationX: 20, formationY: 97,  team: 'MAIN', role: 'DEF', position: 'LCB', playerId: null },
+    { x: 48, y: 97,  formationX: 48, formationY: 97,  team: 'MAIN', role: 'DEF', position: 'RCB', playerId: null },
+    { x: 64, y: 90,  formationX: 64, formationY: 90,  team: 'MAIN', role: 'DEF', position: 'RB',  playerId: null },
+    { x: 22, y: 74,  formationX: 22, formationY: 74,  team: 'MAIN', role: 'MID', position: 'LCM', playerId: null },
+    { x: 46, y: 74,  formationX: 46, formationY: 74,  team: 'MAIN', role: 'MID', position: 'RCM', playerId: null },
+    { x: 5,  y: 70,  formationX: 5,  formationY: 70,  team: 'MAIN', role: 'MID', position: 'LM',  playerId: null },
+    { x: 63, y: 70,  formationX: 63, formationY: 70,  team: 'MAIN', role: 'MID', position: 'RM',  playerId: null },
+    { x: 24, y: 57,  formationX: 24, formationY: 57,  team: 'MAIN', role: 'FWD', position: 'ST',  playerId: null },
+    { x: 44, y: 57,  formationX: 44, formationY: 57,  team: 'MAIN', role: 'FWD', position: 'ST',  playerId: null }
   ]
 };
 
