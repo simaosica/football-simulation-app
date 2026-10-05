@@ -5,6 +5,7 @@ import { normalizePlayers, createSnapshot, resetToLoaded } from "@/engine/format
 
 export default function useFormationManager(baseLayouts: Record<string, PlayerState[] | FormationSlot[]>, type: "MAIN" | "OPPONENT", initialFormation: string = Object.keys(baseLayouts)[0] as string, authStatus: string) {
   const [formation, setFormationState] = useState<string>(initialFormation);
+  const [selectedSavedFormationId, setSelectedSavedFormationId] = useState<string | null>(null);
   const [formationSlots, setFormationSlots] = useState<FormationSlot[]>(() => {
     if (type === "MAIN") {
       return (baseLayouts[initialFormation] ?? []) as FormationSlot[];
@@ -74,6 +75,7 @@ export default function useFormationManager(baseLayouts: Record<string, PlayerSt
   // set formation (predefined) and update positions + refs
   function setFormation(newFormation: string) {
     setFormationState(newFormation);
+    setSelectedSavedFormationId(null);
     const base = baseLayouts[newFormation] ?? [];
   
     if (type === "MAIN") {
@@ -85,8 +87,6 @@ export default function useFormationManager(baseLayouts: Record<string, PlayerSt
       setFormationSlots(newSlots);
       setCurrentLoadedSlots(newSlots);
     
-      setPlayers([]);
-      setCurrentLoaded([]);
       refsRef.current = base.map(() => createRef<HTMLDivElement>());
       setMoved(false);
       return;
@@ -102,18 +102,33 @@ export default function useFormationManager(baseLayouts: Record<string, PlayerSt
   // load a saved formation object
   function loadSavedFormation(f: SavedFormation) {
     setFormationState(f.baseFormation);
-    const normalized = normalizePlayers(f.players);
+    setSelectedSavedFormationId(f.id);
+  
+    if (type === "MAIN") {
+      const slots = f.players as FormationSlot[];
+  
+      setFormationSlots(slots);
+      setCurrentLoadedSlots(slots);
+      refsRef.current = slots.map(() => createRef<HTMLDivElement>());
+      setMoved(false);
+      return;
+    }
+  
+    const normalized = normalizePlayers(f.players as PlayerState[]);
+  
     setPlayers(normalized);
     setCurrentLoaded(normalized);
     refsRef.current = normalized.map(() => createRef<HTMLDivElement>());
     setMoved(false);
-  }  
+  } 
 
   // save current positions as a named formation
   async function saveFormation(name: string) {
     if (!name.trim()) return;
   
-    const snapshot = createSnapshot(players);
+    const snapshot = type === "MAIN"
+      ? formationSlots
+      : createSnapshot(players);
   
     try {
       const res = await fetch("/api/formations", {
@@ -126,13 +141,13 @@ export default function useFormationManager(baseLayouts: Record<string, PlayerSt
           players: snapshot,
         }),
       });
-      
+  
       if (!res.ok) {
         console.error("Save failed");
         return;
       }
-      
-      const newFormation: SavedFormation = await res.json();      
+  
+      const newFormation: SavedFormation = await res.json();
   
       setSavedFormations(prev => [
         {
@@ -144,16 +159,30 @@ export default function useFormationManager(baseLayouts: Record<string, PlayerSt
         },
         ...prev,
       ]);
-
-      const normalizedFromAPI = normalizePlayers(newFormation.players);
-      setPlayers(normalizedFromAPI);
-      setCurrentLoaded(normalizedFromAPI);
-      setMoved(false);
+  
+      if (type === "MAIN") {
+        setSelectedSavedFormationId(newFormation.id);
+        setCurrentLoadedSlots(
+          (newFormation.players as FormationSlot[]).map((slot) => ({
+            ...slot,
+          }))
+        );
+      
+        setMoved(false);
+      } else {
+        const normalizedFromAPI = normalizePlayers(
+          newFormation.players as PlayerState[]
+        );
+  
+        setPlayers(normalizedFromAPI);
+        setCurrentLoaded(normalizedFromAPI);
+        setMoved(false);
+      }
   
     } catch (err) {
       console.error("Failed to save formation", err);
     }
-  }  
+  }
 
   // delete saved formation by index
   async function deleteSavedFormation(index: number) {
@@ -203,6 +232,8 @@ export default function useFormationManager(baseLayouts: Record<string, PlayerSt
   return {
     formation,
     setFormation,
+    selectedSavedFormationId,
+    setSelectedSavedFormationId,
     formationSlots,
     setFormationSlots,
     players,

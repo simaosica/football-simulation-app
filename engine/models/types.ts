@@ -140,7 +140,7 @@ export type SimulationEndMessageKey =
 export type SavedFormation = {
   id: string;
   name: string;
-  players: PlayerState[];
+  players: PlayerState[] | FormationSlot[];
   baseFormation: string;
   type: "MAIN" | "OPPONENT";
 };

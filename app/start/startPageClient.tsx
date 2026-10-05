@@ -9,7 +9,7 @@ import Image from 'next/image';
 import styles from './page.module.css';
 import modalStyles from '@/app/components/modal/modal.module.css';
 import Modal from '@/app/components/modal/modal';
-import { PlayerState, SquadPlayer, FormationSlot, AppStep, TacticalProfile } from '@/engine/models/types';
+import { PlayerState, SquadPlayer, AppStep, TacticalProfile } from '@/engine/models/types';
 import { getRoleFromPosition, formationLayouts, opponentFormationLayouts, PLAYER_PROFILE_CATALOG } from '@/engine/models/constants';
 import Pitch from './pitch';
 import useFormationManager from './useFormationManager';
@@ -31,14 +31,11 @@ export default function StartPage() {
   const {
     formation: mainFormation,
     setFormation: setMainTeamFormation,
-    players: mainPlayers,
+    selectedSavedFormationId: selectedMainSavedFormationId,
     formationSlots: mainFormationSlots,
     setFormationSlots: setMainFormationSlots,
-    resetFormationSlots: resetMainFormationSlots,
-    setPlayers: setMainPlayers,
     refs: mainRefs,
     setMoved: setPlayerMoved,
-    currentLoaded: currentLoadedFormation,
     currentLoadedSlots: currentLoadedFormationSlots,
     savedFormations,
     loadSavedFormation,
@@ -74,7 +71,6 @@ export default function StartPage() {
   const opponentSaveInputRef = useRef<HTMLInputElement>(null);
   const [showDeleteOpponentModal, setShowDeleteOpponentModal] = useState(false);
   const [opponentFormationToDelete, setOpponentFormationToDelete] = useState<number | null>(null);
-
 
 
   const isSetupMode = appStep === "SETUP";
@@ -297,10 +293,6 @@ export default function StartPage() {
     setOriginalShirtNumber(null);
   };
 
-  const allMainTeamFormations = useMemo(() => {
-    return savedFormations.map(f => f.players);
-  }, [savedFormations]);
-
   const allOpponentTeamFormations = useMemo(() => {
     return [
       ...opponentFormations.map(f => opponentFormationLayouts[f]), // base formations
@@ -311,25 +303,27 @@ export default function StartPage() {
   const positionsChanged = useMemo(() => {
     if (editingPlayerIndex !== null) return false;
   
-    const baseSlots = formationLayouts[mainFormation];
-  
     return mainFormationSlots.some((slot, index) => {
-      const baseSlot = baseSlots[index];
+      const loadedSlot = currentLoadedFormationSlots[index];
   
-      if (!baseSlot) return false;
+      if (!loadedSlot) return false;
   
       return (
-        slot.x !== baseSlot.x ||
-        slot.y !== baseSlot.y ||
-        slot.playerId !== baseSlot.playerId
+        slot.x !== loadedSlot.x ||
+        slot.y !== loadedSlot.y ||
+        slot.playerId !== loadedSlot.playerId
       );
     });
-  }, [mainFormationSlots, mainFormation, editingPlayerIndex]);
+  }, [
+    mainFormationSlots,
+    currentLoadedFormationSlots,
+    editingPlayerIndex,
+  ]);
   
   const opponentPlayersChanged = useMemo(() => {
     if (editingPlayerIndex !== null) return false;
 
-    const matchesExisting = allOpponentTeamFormations.some(existing => formationsEqual(opponentPlayers, existing));
+    const matchesExisting = allOpponentTeamFormations.some(existing => formationsEqual(opponentPlayers, existing as PlayerState[])); // temp
     return !matchesExisting; // You can save only if it matches NONE
   }, [opponentPlayers, allOpponentTeamFormations, editingPlayerIndex]);
 
@@ -344,7 +338,7 @@ export default function StartPage() {
         <Pitch
           mainFormationSlots={mainFormationSlots}
           squad={squad}
-          mainPlayers={isSimulationMode ? gameState.mainPlayers : mainPlayers}
+          mainPlayers={isSimulationMode ? gameState.mainPlayers : simulationMainPlayers}
           opponentPlayers={isSimulationMode ? gameState.opponentPlayers : opponentPlayers}
           onFormationSlotClick={(index) => {
             const slot = mainFormationSlots[index];
@@ -450,7 +444,7 @@ export default function StartPage() {
                     setMainTeamFormation(formation);
                   }}
                   className={`${styles.formationButton} ${
-                    mainFormation === formation
+                    mainFormation === formation && selectedMainSavedFormationId === null
                       ? styles.formationButtonSelected
                       : ''
                   }`}
@@ -462,7 +456,7 @@ export default function StartPage() {
                 <div key={`saved-${index}`} className={styles.savedFormationRow}>
                   <button onClick={() => loadSavedFormation(f)}
                     className={`${styles.formationButton} ${
-                      formationsEqual(mainPlayers, f.players)
+                      selectedMainSavedFormationId === f.id
                         ? styles.formationButtonSelected
                         : ''
                     }`}
@@ -523,7 +517,7 @@ export default function StartPage() {
                 <div key={`opp-saved-${index}`} className={styles.savedFormationRow}>
                   <button onClick={() => loadSavedOpponentFormation(f)}
                     className={`${styles.formationButton} ${
-                      formationsEqual(opponentPlayers, f.players)
+                      formationsEqual(opponentPlayers, f.players as PlayerState[]) // temp
                         ? styles.formationButtonSelected
                         : ''
                     }`}
@@ -622,12 +616,15 @@ export default function StartPage() {
             onClick={async () => {
               if (formationToDelete === null) return;
             
-              const shouldFallback = formationsEqual(mainPlayers, savedFormations[formationToDelete].players);
+              const formationToDeleteData = savedFormations[formationToDelete];
+            
+              const isCurrentlySelected =
+                selectedMainSavedFormationId === formationToDeleteData.id;
             
               await deleteSavedFormation(formationToDelete);
             
-              if (shouldFallback) {
-                setMainTeamFormation('4-3-3');
+              if (isCurrentlySelected) {
+                setMainTeamFormation(formationToDeleteData.baseFormation);
               }
             
               closeDeleteModal();
@@ -654,7 +651,10 @@ export default function StartPage() {
             onClick={async () => {
               if (opponentFormationToDelete === null) return;
             
-              const shouldFallback = formationsEqual(opponentPlayers, savedOpponentFormations[opponentFormationToDelete].players);
+              const shouldFallback = formationsEqual(
+                opponentPlayers,
+                savedOpponentFormations[opponentFormationToDelete].players as PlayerState[],
+              ); // temp
             
               await deleteSavedOpponentFormation(opponentFormationToDelete);
             
