@@ -327,7 +327,13 @@ export default function StartPage() {
     return !matchesExisting; // You can save only if it matches NONE
   }, [opponentPlayers, allOpponentTeamFormations, editingPlayerIndex]);
 
-  const isGK = editingPlayerIndex !== null && mainFormationSlots[editingPlayerIndex]?.position === "GK";
+  const isGK = useMemo(() => {
+    if (editingPlayerIndex === null) return false;
+  
+    const slot = mainFormationSlots[editingPlayerIndex];
+  
+    return slot?.position === "GK";
+  }, [editingPlayerIndex, mainFormationSlots]);
 
   if (status === "loading") return null;
   if (!ready) return null;

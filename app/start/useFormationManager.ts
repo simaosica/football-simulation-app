@@ -3,16 +3,22 @@ import React, { createRef, useEffect, useRef, useState } from 'react';
 import { PlayerState, FormationSlot, SavedFormation } from '@/engine/models/types';
 import { normalizePlayers, createSnapshot, resetToLoaded } from "@/engine/formations/formationManager";
 
+function createEmptyFormationSlots(layout: FormationSlot[]): FormationSlot[] {
+  return layout.map((slot) => ({...slot, playerId: null}));
+}
+
 export default function useFormationManager(baseLayouts: Record<string, PlayerState[] | FormationSlot[]>, type: "MAIN" | "OPPONENT", initialFormation: string = Object.keys(baseLayouts)[0] as string, authStatus: string) {
   const [formation, setFormationState] = useState<string>(initialFormation);
   const [selectedSavedFormationId, setSelectedSavedFormationId] = useState<string | null>(null);
+
   const [formationSlots, setFormationSlots] = useState<FormationSlot[]>(() => {
-    if (type === "MAIN") {
-      return (baseLayouts[initialFormation] ?? []) as FormationSlot[];
+    if (type !== "MAIN") {
+      return [];
     }
   
-    return [];
+    return createEmptyFormationSlots((baseLayouts[initialFormation] ?? []) as FormationSlot[]);
   });
+
   const [players, setPlayers] = useState<PlayerState[]>(() => {
     if (type === "MAIN") {
       return [];
@@ -43,10 +49,7 @@ export default function useFormationManager(baseLayouts: Record<string, PlayerSt
       return [];
     }
   
-    return ((baseLayouts[initialFormation] ?? []) as FormationSlot[]).map((slot) => ({
-      ...slot,
-      playerId: null,
-    }));
+    return createEmptyFormationSlots((baseLayouts[initialFormation] ?? []) as FormationSlot[]);
   });
 
   const [savedFormations, setSavedFormations] = useState<SavedFormation[]>([]);
@@ -79,10 +82,7 @@ export default function useFormationManager(baseLayouts: Record<string, PlayerSt
     const base = baseLayouts[newFormation] ?? [];
   
     if (type === "MAIN") {
-      const newSlots = (base as FormationSlot[]).map((slot) => ({
-        ...slot,
-        playerId: null,
-      }));
+      const newSlots = createEmptyFormationSlots(base as FormationSlot[]);
     
       setFormationSlots(newSlots);
       setCurrentLoadedSlots(newSlots);
@@ -163,7 +163,7 @@ export default function useFormationManager(baseLayouts: Record<string, PlayerSt
       if (type === "MAIN") {
         setSelectedSavedFormationId(newFormation.id);
         setCurrentLoadedSlots(
-          (newFormation.players as FormationSlot[]).map((slot) => ({
+          formationSlots.map((slot) => ({
             ...slot,
           }))
         );
@@ -209,23 +209,17 @@ export default function useFormationManager(baseLayouts: Record<string, PlayerSt
     }
   }
 
-  function resetFormationSlots() {
-    const base = baseLayouts[formation] ?? [];
-  
-    if (type !== "MAIN") return;
-  
-    setFormationSlots(
-      (base as FormationSlot[]).map((slot) => ({
-        ...slot,
-        playerId: null,
-      }))
-    );
-  
-    setMoved(false);
-  }
-
   function resetPositions() {
-    setPlayers(resetToLoaded(currentLoaded));
+    if (type === "MAIN") {
+      setFormationSlots(
+        currentLoadedSlots.map((slot) => ({
+          ...slot,
+        }))
+      );
+    } else {
+      setPlayers(resetToLoaded(currentLoaded));
+    }
+  
     setMoved(false);
   }
 
@@ -249,7 +243,6 @@ export default function useFormationManager(baseLayouts: Record<string, PlayerSt
     loadSavedFormation,
     saveFormation,
     deleteSavedFormation,
-    resetFormationSlots,
     resetPositions,
   } as const;
 }
